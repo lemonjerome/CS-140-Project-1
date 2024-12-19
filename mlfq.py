@@ -153,11 +153,11 @@ class MLFQ():
         if self.running:
             match self.running[0].level:
                 case Level.THREE:
-                    if q1.ready.level or q2.ready.level:
+                    if self.q1.ready.level or self.q2.ready.level:
                         self.enqueue_from_cpu()
                         self.run_next()
                 case Level.TWO:
-                    if q1.ready.level:
+                    if self.q1.ready.level:
                         self.enqueue_from_cpu()
                         self.run_next()
                 case Level.ONE:
