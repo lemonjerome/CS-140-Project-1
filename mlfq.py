@@ -50,6 +50,10 @@ class RoundRobinFQ(FeedbackQueue):
         super.__init__(self)
         self.quantum: int = RR_QUANTUM
 
+class FirstComeFirstServeFQ(FeedbackQueue):
+    def __init__(self):
+        super.__init__(self)
+
 
 
         
