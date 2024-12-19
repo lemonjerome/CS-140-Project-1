@@ -5,7 +5,7 @@
 # Gabriel Ramos | 202205080 | THY/FQR 
 
 ##### IMPORTS #####
-from typing import TypeVar
+from typing import TypeVar, List
 
 ##### GLOBAL VARIABLES #####
 T = TypeVar('T')
@@ -13,8 +13,8 @@ RR_QUANTUM: int = 4
 
 ##### CLASSES #####
 class Queue:
-    def __init__(self):
-        self.queue: list[T] = []
+    def __init__(self, queue: List[T] = []):
+        self.queue: List[T] = queue
     
     def enqueue(self, x: T):
         self.queue.append(x)
@@ -28,7 +28,7 @@ class Process:
     def __init__(self, name: str, arrival_time: int, bursts: Queue):
         self.name: str = name
         self.arrival_time: int = arrival_time
-        self.bursts: Queue = bursts
+        self.bursts: Queue[int] = bursts
 
 class FeedbackQueue:
     def __init__(self, allotment: int):
@@ -46,19 +46,43 @@ class FeedbackQueue:
         self.process_sequence.enqueue(process_name)
 
 class RoundRobinFQ(FeedbackQueue):
-    def __init__(self):
-        super.__init__(self)
+    def __init__(self, allotment):
+        super().__init__(allotment)
         self.quantum: int = RR_QUANTUM
 
 class FirstComeFirstServeFQ(FeedbackQueue):
-    def __init__(self):
-        super.__init__(self)
+    def __init__(self, allotment):
+        super().__init__(allotment)
 
+class ShortestJobFirstFQ(FeedbackQueue):
+    def __init__(self, allotment):
+        super().__init__(allotment)
 
+    def ready_enqueue(self, p: Process):
+        self.ready.enqueue(p)
 
-        
+        # bubble sort
+        n: int = len(self.ready.queue)
+        for i in range(n):
+            for j in range(0, n-i-1):
+                if self.ready.queue[j].bursts.queue[0] > self.ready.queue[j+1].bursts.queue[0]:
+                    self.ready.queue[j], self.ready.queue[j+1] = self.ready.queue[j+1], self.ready.queue[j]
 
 
 ##### FUNCTIONS #####
 
 ##### MAIN #####
+
+
+
+# sample sjf
+# A = Process("A", 0, Queue([3, 2, 3]))
+# B = Process("B", 0, Queue([2, 2, 3]))
+# C = Process("C", 0, Queue([1, 2, 3]))
+
+# SJF = ShortestJobFirstFQ(5)
+# SJF.ready_enqueue(A)
+# SJF.ready_enqueue(B)
+# SJF.ready_enqueue(C)
+
+# print([p.name for p in SJF.ready.queue])
