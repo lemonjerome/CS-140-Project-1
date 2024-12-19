@@ -22,6 +22,14 @@ class Queue:
         front: T = self.queue[0]
         self.queue = self.queue[1:]
         return front
+    
+class Process:
+    def __init__(self, name: str, arrival_time: int, bursts: Queue):
+        self.name: str = name
+        self.arrival_time: int = arrival_time
+        self.bursts: Queue = bursts
+
+
         
 
 
