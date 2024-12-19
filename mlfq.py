@@ -30,8 +30,14 @@ class Process:
         self.arrival_time: int = arrival_time
         self.bursts: Queue[int] = bursts
 
+    def __str__(self):
+        return f"Process(name={self.name}, arrival_time={self.arrival_time}, bursts={self.bursts.queue})"
+    
+    def __repr__(self):
+        return self.__str__()
+
 class FeedbackQueue:
-    def __init__(self, allotment: int):
+    def __init__(self, allotment: int = 0):
         self.allotment:int = allotment
         self.ready: Queue[Process] = Queue()
         self.process_sequence: Queue[str] = Queue()
@@ -55,8 +61,8 @@ class FirstComeFirstServeFQ(FeedbackQueue):
         super().__init__(allotment)
 
 class ShortestJobFirstFQ(FeedbackQueue):
-    def __init__(self, allotment):
-        super().__init__(allotment)
+    def __init__(self):
+        super().__init__()
 
     def ready_enqueue(self, p: Process):
         self.ready.enqueue(p)
@@ -70,19 +76,35 @@ class ShortestJobFirstFQ(FeedbackQueue):
 
 
 ##### FUNCTIONS #####
+def get_input()->dict[str, int | list[Process]]:
+    n: int = int(input())
+
+    q1_allotment: int = int(input())
+    q2_allotment: int = int(input())
+    cs: int = int(input())
+
+    processes: list[Process] = []
+
+    for _ in range(n):
+        info: list[str] = input().split(";")
+        name: str = info[0]
+        arrival_time: int  = int(info[1])
+        bursts : Queue[int] = Queue([int(x) for x in info[2:]])
+        processes.append(Process(name, arrival_time, bursts))
+
+    return (q1_allotment, q2_allotment, cs, processes)
 
 ##### MAIN #####
 
-
-
-# sample sjf
 # A = Process("A", 0, Queue([3, 2, 3]))
 # B = Process("B", 0, Queue([2, 2, 3]))
 # C = Process("C", 0, Queue([1, 2, 3]))
 
-# SJF = ShortestJobFirstFQ(5)
+# SJF = ShortestJobFirstFQ()
 # SJF.ready_enqueue(A)
 # SJF.ready_enqueue(B)
 # SJF.ready_enqueue(C)
 
 # print([p.name for p in SJF.ready.queue])
+
+print(get_input())
