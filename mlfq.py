@@ -9,6 +9,7 @@ from typing import TypeVar
 
 ##### GLOBAL VARIABLES #####
 T = TypeVar('T')
+RR_QUANTUM: int = 4
 
 ##### CLASSES #####
 class Queue:
@@ -43,6 +44,11 @@ class FeedbackQueue:
     
     def process_sequence_enqueue(self, process_name: str):
         self.process_sequence.enqueue(process_name)
+
+class RoundRobinFQ(FeedbackQueue):
+    def __init__(self):
+        super.__init__(self)
+        self.quantum: int = RR_QUANTUM
 
 
 
