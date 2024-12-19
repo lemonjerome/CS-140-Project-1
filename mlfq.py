@@ -29,6 +29,22 @@ class Process:
         self.arrival_time: int = arrival_time
         self.bursts: Queue = bursts
 
+class FeedbackQueue:
+    def __init__(self, allotment: int):
+        self.allotment:int = allotment
+        self.ready: Queue[Process] = Queue()
+        self.process_sequence: Queue[str] = Queue()
+
+    def ready_enqueue(self, p: Process):
+        self.ready.enqueue(p)
+
+    def ready_dequeue(self)->Process:
+        return self.ready.dequeue()
+    
+    def process_sequence_enqueue(self, process_name: str):
+        self.process_sequence.enqueue(process_name)
+
+
 
         
 
