@@ -49,6 +49,14 @@ class Process:
     def io(self) -> bool:
         return self.activity % 2 == 1
 
+    @property
+    def length(self) -> int:
+        return self.bursts[0]
+
+    @property
+    def finished(self) -> bool:
+        return self.bursts.queue == []
+
     def tick(self) -> bool:
         self.bursts.queue[0] -= 1
         self.used_allotment += 1
@@ -59,7 +67,7 @@ class Process:
         return False
 
 class FeedbackQueue:
-    def __init__(self, allotment: int = 0):
+    def __init__(self, allotment: int):
         self.allotment:int = allotment
         self.ready: Queue[Process] = Queue([])
 
@@ -87,7 +95,7 @@ class ShortestJobFirstFQ(FeedbackQueue):
         super().__init__(0)
 
     def ready_enqueue(self, p: Process):
-        self.ready = self.ready.enqueue(p)
+        self.ready.enqueue(p)
 
         # bubble sort
         n: int = len(self.ready.queue)
@@ -116,14 +124,14 @@ class MLFQ():
 
     def enqueue(self, process: Process):
         if process.level == Level.ONE:
-            self.q1.ready_enqueue(process)
             logging.info(f'{process.name} Queued to Q1')
+            self.q1.ready_enqueue(process)
         elif process.level == Level.TWO:
-            self.q2.ready_enqueue(process)
             logging.info(f'{process.name} Queued to Q2')
+            self.q2.ready_enqueue(process)
         elif process.level == Level.THREE:
-            self.q3.ready_enqueue(process)
             logging.info(f'{process.name} Queued to Q3')
+            self.q3.ready_enqueue(process)
 
     def run_next(self):
         if self.q1.ready.queue:
@@ -138,23 +146,24 @@ class MLFQ():
     
     def enqueue_arriving(self):
         self.arriving = [process for process in self.processes if process.arrival_time == self.time]
-        logging.info([x.name for x in self.arriving])
+        if self.arriving:
+            logging.info(f'{[x.name for x in self.arriving]} Arrive')
         for process in self.arriving:
-            self.q1.ready_enqueue(process)
+            self.enqueue(process)
     
     def enqueue_from_cpu(self):
-        logging.info(f'{[x.name for x in self.running]} Arriving')
+        logging.info(f'{[x.name for x in self.running]} Bumped From CPU')
         self.enqueue(self.running.pop())
     
     def replace_running(self):
         if self.running:
             match self.running[0].level:
                 case Level.THREE:
-                    if self.q1.ready.level or self.q2.ready.level:
+                    if self.q1.ready.queue or self.q2.ready.queue:
                         self.enqueue_from_cpu()
                         self.run_next()
                 case Level.TWO:
-                    if self.q1.ready.level:
+                    if self.q1.ready.queue:
                         self.enqueue_from_cpu()
                         self.run_next()
                 case Level.ONE:
@@ -170,39 +179,55 @@ class MLFQ():
                 if process.used_allotment == self.q1.allotment:
                     process.used_allotment = 0
                     process.level = Level.TWO
+                    logging.info(f"{process.name} demoted 1 → 2")
             case Level.TWO:
                 if process.used_allotment == self.q2.allotment:
                     process.used_allotment = 0
                     process.level = Level.THREE
+                    logging.info(f"{process.name} demoted 2 → 3")
             case _:
                 pass
 
     def add_to_io(self, process: Process):
         process.used_allotment = 0
         self.io.append(process)
+        logging.info(f'{process.name} does I/O')
 
     def tick(self):
+        logging.info(f"\nTime: {self.time}===========================================================")
+        logging.info(f"Processes: {[x.name for x in self.processes]}")
         #Organize Current Tick
         self.enqueue_arriving()
-
         if self.context_switch == 0:
             self.replace_running()
 
         for process in self.io:
             if process.tick():
-                self.enqueue(process)
+                if process.finished:
+                    logging.info(f"{process.name} Finished in I/O")
+                    self.processes.remove(process)
+                else:
+                    logging.info(f'{process.name} Returns From I/O')
+                    self.enqueue(process)
+                self.io.remove(process)
 
         #Print
-        logging.info(f"Time: {self.time}")
-        logging.info(f'{self.q1.insides} {self.q2.insides} {self.q3.insides}')
+        logging.info(f"\n{self.q1.insides} {self.q2.insides} {self.q3.insides}\nRunning: {self.running[0].name}{self.running[0].bursts.queue}\n I|O: {[x.name for x in self.io]}")
 
         #Setup For Next Tick
         self.time += 1
-        if (self.running[0].tick()):
-            self.try_demotion(self.running[0])
+        check = self.running[0].tick()
+        self.try_demotion(self.running[0])
+        if check:
             if self.running[0].io:
-                self.add_to_io(self.running.pop())
+                if self.running[0].finished:
+                    logging.info(f"{self.running[0].name} Finished in CPU")
+                    self.processes.remove(self.running[0])
+                    self.running.pop()
+                elif not self.running[0].finished:
+                    self.add_to_io(self.running.pop())
                 self.do_context_switch()
+        
 
 ##### FUNCTIONS #####
 def get_input()->dict[str, int | List[Process]]:
