@@ -5,6 +5,7 @@
 # Gabriel Ramos | 202205080 | THY/FQR 
 
 ##### IMPORTS #####
+from __future__ import annotations
 from typing import TypeVar, List
 from enum import Enum
 import logging
@@ -20,7 +21,7 @@ class Level(Enum):
     THREE = 3
 
 class Queue:
-    def __init__(self, queue: List[T] = []):
+    def __init__(self, queue: List[T]):
         self.queue: List[T] = queue
     
     def enqueue(self, x: T):
@@ -59,19 +60,14 @@ class Process:
 
 class FeedbackQueue:
     def __init__(self, allotment: int = 0):
-    def __init__(self, allotment: int = 0):
         self.allotment:int = allotment
-        self.ready: Queue[Process] = Queue()
-        self.process_sequence: Queue[str] = Queue()
+        self.ready: Queue[Process] = Queue([])
 
     def ready_enqueue(self, p: Process):
         self.ready.enqueue(p)
 
     def ready_dequeue(self)->Process:
         return self.ready.dequeue()
-    
-    def process_sequence_enqueue(self, process_name: str):
-        self.process_sequence.enqueue(process_name)
     
     @property
     def insides(self)->List[str]:
@@ -91,7 +87,7 @@ class ShortestJobFirstFQ(FeedbackQueue):
         super().__init__(0)
 
     def ready_enqueue(self, p: Process):
-        self.ready.enqueue(p)
+        self.ready = self.ready.enqueue(p)
 
         # bubble sort
         n: int = len(self.ready.queue)
@@ -248,6 +244,3 @@ def get_input()->dict[str, int | List[Process]]:
 
 # print([p.name for p in SJF.ready.queue])
 
-print(get_input())
-
-print(get_input())

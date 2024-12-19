@@ -11,7 +11,7 @@ def test_mlfq_init():
             milf.tick()
 
     
-    ticks(0)
+    ticks(1)
     assert milf.running[0].name == 'B'
     assert milf.q1.ready.queue[0].name == 'C'
     
