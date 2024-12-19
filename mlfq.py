@@ -58,7 +58,7 @@ class Process:
         return False
 
 class FeedbackQueue:
-    def __init__(self, allotment: int):
+    def __init__(self, allotment: int = 0):
         self.allotment:int = allotment
         self.ready: Queue[Process] = Queue()
         self.process_sequence: Queue[str] = Queue()
@@ -235,16 +235,15 @@ def get_input()->dict[str, int | List[Process]]:
 
 ##### MAIN #####
 
-
-
-# sample sjf
 # A = Process("A", 0, Queue([3, 2, 3]))
 # B = Process("B", 0, Queue([2, 2, 3]))
 # C = Process("C", 0, Queue([1, 2, 3]))
 
-# SJF = ShortestJobFirstFQ(5)
+# SJF = ShortestJobFirstFQ()
 # SJF.ready_enqueue(A)
 # SJF.ready_enqueue(B)
 # SJF.ready_enqueue(C)
 
 # print([p.name for p in SJF.ready.queue])
+
+print(get_input())
