@@ -20,8 +20,8 @@ class Level(Enum):
     THREE = 3
 
 class Queue:
-    def __init__(self, queue: List[T] = []):
-        self.queue: List[T] = queue
+    def __init__(self, queue: List[T] = None):
+        self.queue: List[T] = queue if queue is not None else []
     
     def enqueue(self, x: T):
         self.queue.append(x)
@@ -58,7 +58,6 @@ class Process:
         return False
 
 class FeedbackQueue:
-    def __init__(self, allotment: int = 0):
     def __init__(self, allotment: int = 0):
         self.allotment:int = allotment
         self.ready: Queue[Process] = Queue()
@@ -196,8 +195,6 @@ class MLFQ():
             if process.tick():
                 self.enqueue(process)
 
-        
-
         #Print
         logging.info(f"Time: {self.time}")
         logging.info(f'{self.q1.insides} {self.q2.insides} {self.q3.insides}')
@@ -209,11 +206,6 @@ class MLFQ():
             if self.running[0].io:
                 self.add_to_io(self.running.pop())
                 self.do_context_switch()
-        
-
-
-
-
 
 ##### FUNCTIONS #####
 def get_input()->dict[str, int | List[Process]]:
@@ -236,18 +228,3 @@ def get_input()->dict[str, int | List[Process]]:
 
 ##### MAIN #####
 
-# A = Process("A", 0, Queue([3, 2, 3]))
-# B = Process("B", 0, Queue([2, 2, 3]))
-# C = Process("C", 0, Queue([1, 2, 3]))
-
-# SJF = ShortestJobFirstFQ()
-# SJF = ShortestJobFirstFQ()
-# SJF.ready_enqueue(A)
-# SJF.ready_enqueue(B)
-# SJF.ready_enqueue(C)
-
-# print([p.name for p in SJF.ready.queue])
-
-print(get_input())
-
-print(get_input())
