@@ -120,7 +120,7 @@ class MLFQ():
         self.not_done = 2
 
     def do_context_switch(self):
-        self.context_switch = self.context_switch + self.context_switch_duration +1 
+        self.context_switch = self.context_switch + self.context_switch_duration 
 
     def enqueue(self, process: Process):
         if process.level == Level.ONE:
@@ -160,28 +160,34 @@ class MLFQ():
     
     def replace_running(self):
         if self.running:
-            match self.running[0].level:
-                case Level.THREE:
+            #Get Pre-Empted
+            match (self.running[0].level, self.running[0].io):
+                case (_, True):
+                    self.add_to_io(self.running.pop())
+                    self.do_context_switch()
+                    if not self.context_switch:
+                        self.run_next()
+                case (Level.THREE, False):
                     if self.q1.ready.queue or self.q2.ready.queue:
                         self.enqueue_from_cpu()
                         self.do_context_switch()
                         if not self.context_switch:
                             self.run_next()
-                case Level.TWO:
+                case (Level.TWO, False):
                     if self.q1.ready.queue:
                         self.enqueue_from_cpu()
                         self.do_context_switch()
                         if not self.context_switch:
                             self.run_next()
-                case Level.ONE:
-                    if self.running[0].used_allotment % 4 == 0:
+                case (Level.ONE, False):
+                    if self.running[0].used_allotment % 4 == 0 and self.q1.ready.queue:
                         self.enqueue_from_cpu()
                         self.do_context_switch()
                         if not self.context_switch:
                             self.run_next()
-        else:
-            if not self.context_switch:
-                self.run_next()
+                
+        elif not self.context_switch:
+            self.run_next()
 
     def try_demotion(self, process: Process):
         match process.level:
@@ -227,17 +233,13 @@ class MLFQ():
                 self.io.remove(process)
 
     def cpu_tick(self):
-        check = self.running[0].tick()
-        self.try_demotion(self.running[0])
-        if check:
-            if self.running[0].io:
-                if self.running[0].finished:
-                    self.processes.remove(self.running[0])
-                    self.finishing.append(self.running[0])
-                    self.running.pop()
-                elif not self.running[0].finished:
-                    self.add_to_io(self.running.pop())
-                    self.do_context_switch
+        if self.running:
+            check = self.running[0].tick()
+            self.try_demotion(self.running[0])
+            if check and self.running[0].finished:
+                self.processes.remove(self.running[0])
+                self.finishing.append(self.running[0])
+                self.running.pop()
 
     def tick(self):
         if self.context_switch:
@@ -252,7 +254,6 @@ class MLFQ():
 
         #Print
         self.current_log()
-
         
         #Setup For Next Tick
         self.finishing.clear()
