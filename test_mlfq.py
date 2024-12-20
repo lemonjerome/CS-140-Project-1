@@ -3,15 +3,15 @@ import logging
 
 def test_mlfq_init():
     b = Process('B', 0, Queue([5,2,5,2,5]))
-    a = Process('A', 2, Queue([2,6]))
+    a = Process('A', 2, Queue([2,2]))
     c = Process('C', 0, Queue([30]))
-    mlfq = MLFQ(5, 5, 0, [b,a,c])
+    mlfq = MLFQ(8, 8, 1, [b,a,c])
     def ticks (i: int):
         for j in range(i+1):
             mlfq.tick()
 
     
-    while mlfq.processes:
+    while mlfq.not_done:
         mlfq.tick()
     
     
