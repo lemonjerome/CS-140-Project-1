@@ -112,7 +112,7 @@ class MLFQ():
         self.time = 0
         self.context_switch_duration = context_switch_duration
         self.context_switch = 0
-        self.processes = processes
+        self.processes = alphabetize(processes)
         self.arriving: List[Process] = []
         self.finishing: List[Process] = [] #harder to think of a placeholder Process value
         self.running: List[Process] = []
@@ -218,7 +218,7 @@ class MLFQ():
 
     def add_to_io(self, process: Process):
         process.used_allotment = 0
-        self.io.append(process)
+        alphabetical_insert(self.io, process)
         logging.info(f'{process.name} does I/O')
 
     def io_tick(self):
@@ -286,6 +286,20 @@ def get_input()->dict[str, int | List[Process]]:
         processes.append(Process(name, arrival_time, bursts))
 
     return (q1_allotment, q2_allotment, cs, processes)
+
+def alphabetical_insert(process_list: List[Process], x: Process) -> List[Process]:
+    i = 0
+    for proc in process_list:
+        if proc.name < x.name:
+            i = i + 1
+
+    process_list.insert(i, x)
+
+def alphabetize(process_list: List[Process]) -> List[Process]:
+    retval = []
+    for proc in process_list:
+        alphabetical_insert(retval, proc)
+    return retval
 
 ##### MAIN #####
 
