@@ -117,10 +117,10 @@ class MLFQ():
         self.finishing: List[Process] = [] #harder to think of a placeholder Process value
         self.running: List[Process] = []
         self.io: List[Process] = []
+        self.not_done = 2
 
     def do_context_switch(self):
-        if self.context_switch_duration:
-            self.context_switch += self.context_switch_duration
+        self.context_switch = self.context_switch + self.context_switch_duration +1 
 
     def enqueue(self, process: Process):
         if process.level == Level.ONE:
@@ -136,13 +136,16 @@ class MLFQ():
     def run_next(self):
         if self.q1.ready.queue:
             logging.info(f"Run {self.q1.ready.queue[0].name} from Q1")
-            self.running.append(self.q1.ready_dequeue())
+            q1_deque = self.q1.ready_dequeue()
+            self.running.append(q1_deque)
         elif self.q2.ready.queue:
             logging.info(f"Run {self.q2.ready.queue[0].name} from Q2")
-            self.running.append(self.q2.ready_dequeue())
+            q2_deque = self.q2.ready_dequeue()
+            self.running.append(q2_deque)
         elif self.q3.ready.queue:
             logging.info(f"Run {self.q3.ready.queue[0].name} from Q3")
-            self.running.append(self.q3.ready_dequeue())
+            q3_deque = self.q3.ready_dequeue()
+            self.running.append(q3_deque)
     
     def enqueue_arriving(self):
         self.arriving = [process for process in self.processes if process.arrival_time == self.time]
@@ -161,17 +164,24 @@ class MLFQ():
                 case Level.THREE:
                     if self.q1.ready.queue or self.q2.ready.queue:
                         self.enqueue_from_cpu()
-                        self.run_next()
+                        self.do_context_switch()
+                        if not self.context_switch:
+                            self.run_next()
                 case Level.TWO:
                     if self.q1.ready.queue:
                         self.enqueue_from_cpu()
-                        self.run_next()
+                        self.do_context_switch()
+                        if not self.context_switch:
+                            self.run_next()
                 case Level.ONE:
                     if self.running[0].used_allotment % 4 == 0:
                         self.enqueue_from_cpu()
-                        self.run_next()
+                        self.do_context_switch()
+                        if not self.context_switch:
+                            self.run_next()
         else:
-            self.run_next()
+            if not self.context_switch:
+                self.run_next()
 
     def try_demotion(self, process: Process):
         match process.level:
@@ -188,47 +198,75 @@ class MLFQ():
             case _:
                 pass
 
+    def current_log(self):
+        logging.info(f'''
+
+        {f"Arriving: {[x.name for x in self.arriving]}" if self.arriving else ""}
+        {f'Finishing: {[x.name for x in self.finishing]}' if self.finishing else ""}
+        Queues:{self.q1.insides} {self.q2.insides} {self.q3.insides}
+        CPU: {(self.running[0].name, self.running[0].bursts.queue) if self.running else self.running}
+        {f'I/O: {[(x.name, x.bursts.queue) for x in self.io]}' if self.io else ""}
+        {"CONTEXT SWITCHING" if self.context_switch else ""}
+        {"SIMULATION DONE" if self.not_done == 1 else ""}
+        ''')
+
     def add_to_io(self, process: Process):
         process.used_allotment = 0
         self.io.append(process)
         logging.info(f'{process.name} does I/O')
 
-    def tick(self):
-        logging.info(f"\nTime: {self.time}===========================================================")
-        logging.info(f"Processes: {[x.name for x in self.processes]}")
-        #Organize Current Tick
-        self.enqueue_arriving()
-        if self.context_switch == 0:
-            self.replace_running()
-
+    def io_tick(self):
         for process in self.io:
             if process.tick():
                 if process.finished:
-                    logging.info(f"{process.name} Finished in I/O")
                     self.processes.remove(process)
+                    self.finishing.append(process)
                 else:
                     logging.info(f'{process.name} Returns From I/O')
                     self.enqueue(process)
                 self.io.remove(process)
 
-        #Print
-        logging.info(f"\n{self.q1.insides} {self.q2.insides} {self.q3.insides}\nRunning: {self.running[0].name}{self.running[0].bursts.queue}\n I|O: {[x.name for x in self.io]}")
-
-        #Setup For Next Tick
-        self.time += 1
+    def cpu_tick(self):
         check = self.running[0].tick()
         self.try_demotion(self.running[0])
         if check:
             if self.running[0].io:
                 if self.running[0].finished:
-                    logging.info(f"{self.running[0].name} Finished in CPU")
                     self.processes.remove(self.running[0])
+                    self.finishing.append(self.running[0])
                     self.running.pop()
                 elif not self.running[0].finished:
                     self.add_to_io(self.running.pop())
-                self.do_context_switch()
-        
+                    self.do_context_switch
 
+    def tick(self):
+        if self.context_switch:
+            self.context_switch -= 1
+        logging.info(f"\nTime: {self.time}=========================================================== (   {self.time}   )")
+        logging.info(f"Processes: {[x.name for x in self.processes]}")
+        #Organize Current Tick
+        if self.processes:
+            self.enqueue_arriving()
+            if not self.context_switch:
+                self.replace_running()
+
+        #Print
+        self.current_log()
+
+        
+        #Setup For Next Tick
+        self.finishing.clear()
+        if self.processes:
+            self.time += 1
+            self.io_tick()
+            if not self.context_switch:
+                self.cpu_tick()
+        
+        
+        if not self.processes:
+            self.not_done -= 1
+
+        
 ##### FUNCTIONS #####
 def get_input()->dict[str, int | List[Process]]:
     n: int = int(input())
