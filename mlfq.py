@@ -59,7 +59,8 @@ class Process:
 
     def tick(self) -> bool:
         self.bursts.queue[0] -= 1
-        self.used_allotment += 1
+        if self.cpu:
+            self.used_allotment += 1
         if self.bursts.queue[0] == 0:
             self.bursts.dequeue()
             self.activity = self.activity +1
@@ -111,7 +112,7 @@ class MLFQ():
         self.q3 = ShortestJobFirstFQ() #allotment is not used
         self.time = 0
         self.context_switch_duration = context_switch_duration
-        self.context_switch = 0
+        self.context_switch_countdown = 0
         self.processes = alphabetize(processes)
         self.arriving: List[Process] = []
         self.finishing: List[Process] = [] #harder to think of a placeholder Process value
@@ -120,7 +121,7 @@ class MLFQ():
         self.not_done = 2
 
     def do_context_switch(self):
-        self.context_switch = self.context_switch + self.context_switch_duration 
+        self.context_switch_countdown = self.context_switch_countdown + self.context_switch_duration 
 
     def enqueue(self, process: Process):
         if process.level == Level.ONE:
@@ -163,30 +164,31 @@ class MLFQ():
             #Get Pre-Empted
             match (self.running[0].level, self.running[0].io):
                 case (_, True):
+                    self.running[0].used_allotment = 0
                     self.add_to_io(self.running.pop())
                     self.do_context_switch()
-                    if not self.context_switch:
+                    if not self.context_switch_countdown:
                         self.run_next()
                 case (Level.THREE, False):
                     if self.q1.ready.queue or self.q2.ready.queue:
                         self.enqueue_from_cpu()
                         self.do_context_switch()
-                        if not self.context_switch:
+                        if not self.context_switch_countdown:
                             self.run_next()
                 case (Level.TWO, False):
                     if self.q1.ready.queue:
                         self.enqueue_from_cpu()
                         self.do_context_switch()
-                        if not self.context_switch:
+                        if not self.context_switch_countdown:
                             self.run_next()
                 case (Level.ONE, False):
                     if self.running[0].used_allotment % 4 == 0 and self.q1.ready.queue:
                         self.enqueue_from_cpu()
                         self.do_context_switch()
-                        if not self.context_switch:
+                        if not self.context_switch_countdown:
                             self.run_next()
                 
-        elif not self.context_switch:
+        elif not self.context_switch_countdown:
             self.run_next()
 
     def try_demotion(self, process: Process):
@@ -210,9 +212,9 @@ class MLFQ():
         {f"Arriving: {[x.name for x in self.arriving]}" if self.arriving else ""}
         {f'Finishing: {[x.name for x in self.finishing]}' if self.finishing else ""}
         Queues:{self.q1.insides} {self.q2.insides} {self.q3.insides}
-        CPU: {(self.running[0].name, self.running[0].bursts.queue) if self.running else self.running}
-        {f'I/O: {[(x.name, x.bursts.queue) for x in self.io]}' if self.io else ""}
-        {"CONTEXT SWITCHING" if self.context_switch else ""}
+        CPU: {(self.running[0].name, self.running[0].bursts.queue, self.running[0].used_allotment) if self.running else self.running}
+        {f'I/O: {[(x.name, x.bursts.queue, x.used_allotment) for x in self.io]}' if self.io else ""}
+        {f"CONTEXT SWITCHING:" if self.context_switch_countdown else ""}
         {"SIMULATION DONE" if self.not_done == 1 else ""}
         ''')
 
@@ -242,14 +244,14 @@ class MLFQ():
                 self.running.pop()
 
     def tick(self):
-        if self.context_switch:
-            self.context_switch -= 1
+        if self.context_switch_countdown:
+            self.context_switch_countdown -= 1
         logging.info(f"\nTime: {self.time}=========================================================== (   {self.time}   )")
         logging.info(f"Processes: {[x.name for x in self.processes]}")
         #Organize Current Tick
         if self.processes:
             self.enqueue_arriving()
-            if not self.context_switch:
+            if not self.context_switch_countdown:
                 self.replace_running()
 
         #Print
@@ -260,9 +262,8 @@ class MLFQ():
         if self.processes:
             self.time += 1
             self.io_tick()
-            if not self.context_switch:
+            if not self.context_switch_countdown:
                 self.cpu_tick()
-        
         
         if not self.processes:
             self.not_done -= 1
