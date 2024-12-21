@@ -118,6 +118,7 @@ class MLFQ():
         self.context_switch_duration = context_switch_duration
         self.context_switch_countdown = 0
         self.processes = alphabetize(processes)
+        self.finalprocesses = alphabetize(processes)
         self.arriving: List[Process] = []
         self.finishing: List[Process] = [] #harder to think of a placeholder Process value
         self.running: List[Process] = []
@@ -310,17 +311,30 @@ class MLFQ():
         cpu_bursts = list(process.totalbursts.queue)[::2]
         process.waiting_time = turnaround_time - sum(cpu_bursts)
     
-    """     def print_output(self):
-            print("\nSIMULATION DONE")
+    def print_output(self):
+        print("\nSIMULATION DONE\n")
 
-            turnaround_times = {}
-            waiting_times = {}
+        turnaround_times = {}
+        waiting_times = {}
+        completion_times = {}
+        arrival_times = {}
 
-            for process in self.finishing:
-                turnaround_times[process.name] = process.completion_time - process.arrival_time
-                waiting_times[process.name] = process.waiting_time
-                print(process.name)
-    """
+        for process in self.finalprocesses:
+            turnaround_times[process.name] = process.completion_time - process.arrival_time
+            waiting_times[process.name] = process.waiting_time
+            completion_times[process.name] = process.completion_time
+            arrival_times[process.name] = process.arrival_time
+        
+        for name in sorted(turnaround_times.keys()):
+            print(f"Turn-around time for Process {name} : {completion_times[name]} - {arrival_times[name]} = {turnaround_times[name]} ms")
+        
+        avg_turnaround = int(sum(turnaround_times.values()) / len(turnaround_times))
+        print(f"Average Turn-around Time = {avg_turnaround} ms")
+
+        for name in sorted(waiting_times.keys()):
+            print(f"Waiting time for Process {name} : {waiting_times[name]} ms")
+
+
 
     def tick(self):
         if self.context_switch_countdown:
@@ -350,7 +364,7 @@ class MLFQ():
         
         if not self.processes:
             self.display_output()
-            #self.print_output()
+            self.print_output()
             self.not_done -= 1
 
         
