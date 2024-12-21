@@ -169,39 +169,60 @@ class MLFQ():
         for process in to_remove:
             self.io.remove(process)
 
+    def prio_from_io(self) -> Level:
+        retval = Level.THREE
+        for process in self.io:
+            if process.cpu:
+                match (process.level, retval):
+                    case (Level.ONE, _):
+                        return Level.ONE
+                    case (Level.TWO, Level.THREE):
+                        retval = Level.TWO
+                    case (_, Level.TWO):
+                        pass
+                    case (Level.THREE, _):
+                        pass
+        return retval
     
-    def replace_running(self):
+    def remove_running(self) -> bool:
         if self.running:
             self.try_demotion(self.running[0])
-            #Get Pre-Empted
+            incoming_from_io = self.prio_from_io()
             match (self.running[0].level, self.running[0].io):
                 case (_, True):
                     self.running[0].used_allotment = 0
                     self.add_to_io(self.running.pop())
                     self.do_context_switch()
                     if not self.context_switch_countdown:
-                        self.run_next()
+                        #self.run_next()
+                        return True
                 case (Level.THREE, False):
-                    if self.q1.ready.queue or self.q2.ready.queue:
+                    if self.q1.ready.queue or self.q2.ready.queue or incoming_from_io == Level.ONE or incoming_from_io == Level.TWO:
                         self.enqueue_from_cpu()
                         self.do_context_switch()
                         if not self.context_switch_countdown:
-                            self.run_next()
+                            #self.run_next() 
+                            return True
                 case (Level.TWO, False):
-                    if self.q1.ready.queue:
+                    if self.q1.ready.queue or incoming_from_io == Level.ONE:
                         self.enqueue_from_cpu()
                         self.do_context_switch()
                         if not self.context_switch_countdown:
-                            self.run_next()
+                            #self.run_next()
+                            return True
                 case (Level.ONE, False):
                     if self.running[0].used_allotment % 4 == 0 and self.q1.ready.queue:
                         self.enqueue_from_cpu()
                         self.do_context_switch()
                         if not self.context_switch_countdown:
-                            self.run_next()
+                            #self.run_next()
+                            return True
                 
         elif not self.context_switch_countdown:
-            self.run_next()
+            #self.run_next()
+            return True
+        else:
+            return False
 
     def try_demotion(self, process: Process):
         match process.level:
@@ -265,9 +286,10 @@ class MLFQ():
         #Organize Current Tick
         if self.processes:
             self.enqueue_arriving()
-            if not self.context_switch_countdown:
-                self.replace_running()
+            do_run_next = self.remove_running() #has enqueue_from_cpu()
             self.enqueue_from_io()
+            if do_run_next:
+                self.run_next()
 
         #Print
         self.current_log()
