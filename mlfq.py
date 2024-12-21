@@ -171,6 +171,7 @@ class MLFQ():
     
     def replace_running(self):
         if self.running:
+            self.try_demotion(self.running[0])
             #Get Pre-Empted
             match (self.running[0].level, self.running[0].io):
                 case (_, True):
@@ -247,7 +248,6 @@ class MLFQ():
     def cpu_tick(self):
         if self.running:
             check = self.running[0].tick()
-            self.try_demotion(self.running[0])
             if check and self.running[0].finished:
                 self.processes.remove(self.running[0])
                 self.finishing.append(self.running[0])
