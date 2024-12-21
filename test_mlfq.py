@@ -7,7 +7,7 @@ def test_mlfq_init():
     c = Process('C', 0, Queue([30]))
     mlfq = MLFQ(8,8,0, [a,b,c])
 
-    while mlfq.not_done: mlfq.tick()
+    #while mlfq.not_done: mlfq.tick()
 
 def test_case_1():
     a = Process('A', 0, Queue([10,2,8,1]))
@@ -15,7 +15,7 @@ def test_case_1():
     c = Process('C', 0, Queue([4,2]))
     mlfq = MLFQ(5,5,0, [a,b,c])
 
-    #while mlfq.not_done: mlfq.tick()
+    while mlfq.not_done: mlfq.tick()
 
 def test_case_2():
     a = Process('P', 0, Queue([4,3,2,1]))
@@ -34,6 +34,7 @@ def test_case_3():
     mlfq = MLFQ(8,8,0, [c,b,a,d,e])
 
     #while mlfq.not_done: mlfq.tick()
+
 
 
 
