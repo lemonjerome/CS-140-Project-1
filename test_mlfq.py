@@ -26,10 +26,12 @@ def test_case_2():
     #while mlfq.not_done: mlfq.tick()
 
 def test_case_3():
-    a = Process('X', 0, Queue([1,3,2,1]))
-    b = Process('Y', 0, Queue([1,2,3,4]))
-    c = Process('Z', 4, Queue([5,2]))
-    mlfq = MLFQ(8,8,0, [c,b,a])
+    a = Process('G', 0, Queue([1,5,2,1]))
+    b = Process('X', 0, Queue([1,4,3,4]))
+    c = Process('Y', 6, Queue([5,2]))
+    d = Process('Z', 0, Queue([5,3,7]))
+    e = Process('ZK', 0, Queue([5,3,7]))
+    mlfq = MLFQ(8,8,0, [c,b,a,d,e])
 
     while mlfq.not_done: mlfq.tick()
 

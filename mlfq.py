@@ -164,9 +164,9 @@ class MLFQ():
         for process in self.io:
             if process.cpu:
                 to_remove.append(process)
-                enqueue(process)
+                self.enqueue(process)
         for process in to_remove:
-            self.processes.remove(process)
+            self.io.remove(process)
 
     
     def replace_running(self):
@@ -241,6 +241,7 @@ class MLFQ():
                     to_remove.append(process)
                     self.finishing.append(process)
         for process in to_remove:
+            self.io.remove(process)
             self.processes.remove(process)
 
     def cpu_tick(self):
@@ -262,6 +263,7 @@ class MLFQ():
             self.enqueue_arriving()
             if not self.context_switch_countdown:
                 self.replace_running()
+            self.enqueue_from_io()
 
         #Print
         self.current_log()
