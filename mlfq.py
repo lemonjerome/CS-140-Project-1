@@ -118,6 +118,7 @@ class MLFQ():
         self.finishing: List[Process] = [] #harder to think of a placeholder Process value
         self.running: List[Process] = []
         self.io: List[Process] = []
+        self.demotions: List[Process] = []
         self.not_done = 2
 
     def do_context_switch(self):
@@ -209,11 +210,13 @@ class MLFQ():
                     process.used_allotment = 0
                     process.level = Level.TWO
                     logging.info(f"{process.name} demoted 1 → 2")
+                    self.demotions.append(process)
             case Level.TWO:
                 if process.used_allotment == self.q2.allotment:
                     process.used_allotment = 0
                     process.level = Level.THREE
                     logging.info(f"{process.name} demoted 2 → 3")
+                    self.demotions.append(process)
             case _:
                 pass
 
@@ -225,7 +228,8 @@ class MLFQ():
         Queues:{self.q1.insides} {self.q2.insides} {self.q3.insides}
         CPU: {(self.running[0].name, self.running[0].bursts.queue, self.running[0].used_allotment) if self.running else self.running}
         {f'I/O: {[(x.name, x.bursts.queue, x.used_allotment) for x in self.io]}' if self.io else ""}
-        {f"CONTEXT SWITCHING:" if self.context_switch_countdown else ""}
+        {f'Demotions: {[x.name for x in self.demotions]}' if self.demotions and self.not_done != 1 else ""}
+        {f"CONTEXT SWITCHING:" if self.context_switch_countdown  else ""}
         {"SIMULATION DONE" if self.not_done == 1 else ""}
         ''')
 
@@ -270,6 +274,7 @@ class MLFQ():
         
         #Setup For Next Tick
         self.finishing.clear()
+        self.demotions.clear()
         if self.processes:
             self.time += 1
             self.io_tick()
