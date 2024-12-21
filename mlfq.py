@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TypeVar, List, Tuple
 from enum import Enum
 import logging
+import copy
 
 ##### GLOBAL VARIABLES #####
 T = TypeVar('T')
@@ -37,9 +38,12 @@ class Process:
         self.name: str = name
         self.arrival_time: int = arrival_time
         self.bursts: Queue[int] = bursts
+        self.totalbursts: Queue[int] = copy.deepcopy(bursts)
         self.activity = 0
         self.used_allotment = 0
         self.level = Level.ONE
+        self.completion_time = -1
+        self.waiting_time = 0
 
     @property
     def cpu(self)-> bool:
@@ -120,6 +124,7 @@ class MLFQ():
         self.io: List[Process] = []
         self.demotions: List[Process] = []
         self.not_done = 2
+        
 
     def do_context_switch(self):
         self.context_switch_countdown = self.context_switch_countdown + self.context_switch_duration 
@@ -283,6 +288,7 @@ class MLFQ():
         for process in self.io:
             if process.tick():
                 if process.finished:
+                    self.get_times(process)
                     to_remove.append(process)
                     self.finishing.append(process)
         for process in to_remove:
@@ -293,9 +299,28 @@ class MLFQ():
         if self.running:
             check = self.running[0].tick()
             if check and self.running[0].finished:
+                self.get_times(self.running[0])
                 self.processes.remove(self.running[0])
                 self.finishing.append(self.running[0])
                 self.running.pop()
+    
+    def get_times(self, process: Process):
+        process.completion_time = self.time
+        turnaround_time = process.completion_time - process.arrival_time
+        cpu_bursts = list(process.totalbursts.queue)[::2]
+        process.waiting_time = turnaround_time - sum(cpu_bursts)
+    
+    """     def print_output(self):
+            print("\nSIMULATION DONE")
+
+            turnaround_times = {}
+            waiting_times = {}
+
+            for process in self.finishing:
+                turnaround_times[process.name] = process.completion_time - process.arrival_time
+                waiting_times[process.name] = process.waiting_time
+                print(process.name)
+    """
 
     def tick(self):
         if self.context_switch_countdown:
@@ -325,6 +350,7 @@ class MLFQ():
         
         if not self.processes:
             self.display_output()
+            #self.print_output()
             self.not_done -= 1
 
         
