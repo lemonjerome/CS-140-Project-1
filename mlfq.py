@@ -5,7 +5,7 @@
 # Gabriel Ramos | 202205080 | THY/FQR 
 
 ##### IMPORTS #####
-from typing import TypeVar, List
+from typing import TypeVar, List, Tuple
 from enum import Enum
 import logging
 
@@ -208,7 +208,7 @@ class MLFQ():
                 self.do_context_switch()
 
 ##### FUNCTIONS #####
-def get_input()->dict[str, int | List[Process]]:
+def get_input()->Tuple[int, int, int, List[Process]]:
     n: int = int(input())
 
     q1_allotment: int = int(input())
