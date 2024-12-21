@@ -6,7 +6,7 @@
 
 ##### IMPORTS #####
 from __future__ import annotations
-from typing import TypeVar, List
+from typing import TypeVar, List, Tuple
 from enum import Enum
 import logging
 
@@ -281,7 +281,7 @@ class MLFQ():
 
         
 ##### FUNCTIONS #####
-def get_input()->dict[str, int | List[Process]]:
+def get_input()->Tuple[int, int, int, List[Process]]:
     n: int = int(input())
 
     q1_allotment: int = int(input())
