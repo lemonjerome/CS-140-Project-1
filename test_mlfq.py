@@ -5,7 +5,7 @@ def test_mlfq_init():
     a = Process('A', 2, Queue([2,2]))
     b = Process('B', 0, Queue([5,2,5,2,5]))
     c = Process('C', 0, Queue([30]))
-    mlfq = MLFQ(5,5,0, [a,b,c])
+    mlfq = MLFQ(8,8,0, [a,b,c])
 
     while mlfq.not_done: mlfq.tick()
 
