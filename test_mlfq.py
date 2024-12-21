@@ -23,6 +23,16 @@ def test_case_2():
     c = Process('W', 0, Queue([5,5,5,5]))
     mlfq = MLFQ(5,2,1, [c,b,a])
 
+    #while mlfq.not_done: mlfq.tick()
+
+def test_case_3():
+    a = Process('G', 0, Queue([1,5,2,1]))
+    b = Process('X', 0, Queue([1,4,3,4]))
+    c = Process('Y', 6, Queue([5,2]))
+    d = Process('Z', 0, Queue([5,3,7]))
+    e = Process('ZK', 0, Queue([5,3,7]))
+    mlfq = MLFQ(8,8,0, [c,b,a,d,e])
+
     while mlfq.not_done: mlfq.tick()
 
 

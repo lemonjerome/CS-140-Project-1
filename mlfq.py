@@ -158,6 +158,16 @@ class MLFQ():
     def enqueue_from_cpu(self):
         logging.info(f'{[x.name for x in self.running]} Bumped From CPU')
         self.enqueue(self.running.pop())
+
+    def enqueue_from_io(self):
+        to_remove: List[Process] = []
+        for process in self.io:
+            if process.cpu:
+                to_remove.append(process)
+                self.enqueue(process)
+        for process in to_remove:
+            self.io.remove(process)
+
     
     def replace_running(self):
         if self.running:
@@ -224,15 +234,15 @@ class MLFQ():
         logging.info(f'{process.name} does I/O')
 
     def io_tick(self):
+        to_remove: List[Process] = []
         for process in self.io:
             if process.tick():
                 if process.finished:
-                    self.processes.remove(process)
+                    to_remove.append(process)
                     self.finishing.append(process)
-                else:
-                    logging.info(f'{process.name} Returns From I/O')
-                    self.enqueue(process)
-                self.io.remove(process)
+        for process in to_remove:
+            self.io.remove(process)
+            self.processes.remove(process)
 
     def cpu_tick(self):
         if self.running:
@@ -253,6 +263,7 @@ class MLFQ():
             self.enqueue_arriving()
             if not self.context_switch_countdown:
                 self.replace_running()
+            self.enqueue_from_io()
 
         #Print
         self.current_log()
