@@ -254,6 +254,25 @@ class MLFQ():
         {"SIMULATION DONE" if self.not_done == 1 else ""}
         ''')
 
+    def display_output(self):
+        print(f"\nAt Time = {self.time}")
+        
+        if self.arriving:
+            print(f"Arriving : [{', '.join(x.name for x in self.arriving)}]")
+        
+        if self.finishing:
+            print(f"{', '.join([x.name for x in self.finishing])} DONE")
+
+        print(f"Queues : [{', '.join(self.q1.insides)}];[{', '.join(self.q2.insides)}];[{', '.join(self.q3.insides)}]")
+
+        print(f"CPU : {self.running[0].name if self.running else []}")
+
+        if self.io:
+            print(f"I/O : {', '.join([x.name for x in self.io])}")
+        
+        if self.demotions and self.not_done != 1:
+            print(f"{', '.join(x.name for x in self.demotions)} DEMOTED")
+
     def add_to_io(self, process: Process):
         process.used_allotment = 0
         alphabetical_insert(self.io, process)
@@ -293,6 +312,7 @@ class MLFQ():
 
         #Print
         self.current_log()
+        self.display_output()
         
         #Setup For Next Tick
         self.finishing.clear()
@@ -304,6 +324,7 @@ class MLFQ():
                 self.cpu_tick()
         
         if not self.processes:
+            self.display_output()
             self.not_done -= 1
 
         
@@ -341,4 +362,12 @@ def alphabetize(process_list: List[Process]) -> List[Process]:
     return retval
 
 ##### MAIN #####
+def main():
+    q1_allotment, q2_allotment, context_switch_duration, processes = get_input()
+    mlfq = MLFQ(q1_allotment, q2_allotment, context_switch_duration, processes)
 
+    while mlfq.processes:
+        mlfq.tick()
+
+if __name__ == "__main__":
+    main()
