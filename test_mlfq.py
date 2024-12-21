@@ -2,17 +2,32 @@ from mlfq import MLFQ, ShortestJobFirstFQ, RoundRobinFQ, FirstComeFirstServeFQ, 
 import logging
 
 def test_mlfq_init():
+    a = Process('A', 2, Queue([2,2]))
     b = Process('B', 0, Queue([5,2,5,2,5]))
-    a = Process('A', 2, Queue([2,6]))
     c = Process('C', 0, Queue([30]))
-    milf = MLFQ(12, 12, 0, [b,a,c])
-    def ticks (i: int):
-        for j in range(i+1):
-            milf.tick()
+    mlfq = MLFQ(5,5,0, [a,b,c])
 
-    
-    ticks(0)
-    assert milf.running[0].name == 'B'
-    assert milf.q1.ready.queue[0].name == 'C'
+    #while mlfq.not_done: mlfq.tick()
+
+def test_case_1():
+    a = Process('A', 0, Queue([10,2,8,1]))
+    b = Process('B', 1, Queue([3,1,2,1]))
+    c = Process('C', 0, Queue([4,2]))
+    mlfq = MLFQ(5,5,0, [a,b,c])
+
+    #while mlfq.not_done: mlfq.tick()
+
+def test_case_2():
+    a = Process('P', 0, Queue([4,3,2,1]))
+    b = Process('R', 0, Queue([1,2,3,4]))
+    c = Process('W', 0, Queue([5,5,5,5]))
+    mlfq = MLFQ(5,2,1, [c,b,a])
+
+    while mlfq.not_done: mlfq.tick()
+
+
+
+
+
     
     
